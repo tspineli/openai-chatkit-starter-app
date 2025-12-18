@@ -1,17 +1,32 @@
 const readEnvString = (value: unknown): string | undefined =>
   typeof value === "string" && value.trim() ? value.trim() : undefined;
 
+/**
+ * Workflow ID (Agent Builder)
+ * Deve ser definido no frontend:
+ * VITE_CHATKIT_WORKFLOW_ID=wf_xxx
+ */
 export const workflowId = (() => {
   const id = readEnvString(import.meta.env.VITE_CHATKIT_WORKFLOW_ID);
   if (!id || id.startsWith("wf_replace")) {
-    throw new Error("Set VITE_CHATKIT_WORKFLOW_ID in your .env file.");
+    throw new Error("Set VITE_CHATKIT_WORKFLOW_ID in your environment variables.");
   }
   return id;
 })();
 
+/**
+ * Base URL do backend ChatKit
+ * - Em dev: undefined → usa proxy do Vite (/api/...)
+ * - Em prod: https://<backend>.up.railway.app
+ */
+const apiBase = readEnvString(import.meta.env.VITE_CHATKIT_API_BASE)?.replace(/\/$/, "");
+
+/**
+ * Cria o fetcher responsável por obter o client_secret
+ */
 export function createClientSecretFetcher(
   workflow: string,
-  endpoint = "/api/create-session"
+  endpoint = `${apiBase ?? ""}/api/create-session`
 ) {
   return async (currentSecret: string | null) => {
     if (currentSecret) return currentSecret;
